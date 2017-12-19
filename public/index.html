@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Page Title</title>
+	<link href="/styles.css" rel="stylesheet"/>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">	
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	
+	<script src="/chat.js"></script>
+</head>
+<body ng-app="app" ng-controller="HomeCtrl">
+	<div class="container">
+		<div class="row" ng-if="nickname == ''">
+			<div class="col-sm-6">
+				<input class="form-control" id="handle" type="text" placeholder="Handle" ng-model="nickname" />
+				<button class="btn btn-primary" ng-disabled="nickname == ''" ng-click="Connect(nickname)">Submit</button>
+			</div>
+		</div>
+		<div class="row" ng-if="nickname != ''">
+			<div class="col-sm-4">
+				<div class="row">
+					<div id="chat-window" class="col-sm-12">
+						<div id="output">
+							<div ng-repeat="message in messages track by $index">
+								<p ng-if="message.handle">
+									<strong>{{message.handle}}:&nbsp;</strong>
+									{{message.message}}
+								</p>
+								<p ng-if="!message.handle">
+									<i>{{message.message}}</i>
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<br />
+								
+				<div class="row">
+					<div class="col-sm-9">
+						<input class="form-control" id="message" type="text" placeholder="Message" ng-keypress="EnterPressed($event)" />
+					</div>
+					<div class="col-sm-3">
+						<button class="btn btn-primary" style="width:100%" ng-click="SendMessage()">Send</button>
+					</div>
+				</div>
+				
+				<br />
+				
+				<div class="row">
+					<div class="col-sm-12">
+						<button class="btn btn-primary" ng-click="CreateRoom(nickname)" ng-if="current_room != nickname && current_room == 'General'">Create Room</button>
+						<button class="btn btn-primary" ng-click="JoinRoom('General')" ng-if="current_room != 'General'">Leave Room</button>
+					</div>
+				</div>
+				
+				<br />
+				
+				<div id="rooms" class="row">
+					<div class="col-sm-12">
+						Rooms: <span ng-bind="rooms.length"></span>
+						<div ng-repeat="room in rooms track by room.name">
+							<span ng-if="room.name == current_room || room.playing">{{room.name}} ({{room.players.length}})</span>
+							<a href="" ng-if="room.name != current_room && !room.playing" ng-click="JoinRoom(room.name)">{{room.name}} ({{room.players.length}})</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
