@@ -19,11 +19,17 @@
 	<div class="container">
 		<div class="row" ng-if="nickname == ''">
 			<div class="col-sm-6">
-				<input class="form-control" id="handle" type="text" placeholder="Handle" ng-model="nickname" />
+				<input class="form-control" id="handle" type="text" placeholder="Name" ng-model="nickname" />
 				<button class="btn btn-primary" ng-disabled="nickname == ''" ng-click="Connect(nickname)">Submit</button>
 			</div>
 		</div>
 		<div class="row" ng-if="nickname != ''">
+			<div class="col-sm-8">
+				<div id="cards">
+					
+				</div>
+			</div>
+			
 			<div class="col-sm-4">
 				<div class="row">
 					<div id="chat-window" class="col-sm-12">
@@ -54,7 +60,7 @@
 				
 				<br />
 				
-				<div class="row">
+				<!--<div class="row">
 					<div class="col-sm-12">
 						<button class="btn btn-primary" ng-click="CreateRoom(nickname)" ng-if="current_room != nickname && current_room == 'General'">Create Room</button>
 						<button class="btn btn-primary" ng-click="JoinRoom('General')" ng-if="current_room != 'General'">Leave Room</button>
@@ -71,7 +77,7 @@
 							<a href="" ng-if="room.name != current_room && !room.playing" ng-click="JoinRoom(room.name)">{{room.name}} ({{room.players.length}})</a>
 						</div>
 					</div>
-				</div>
+				</div>-->
 			</div>
 		</div>
 	</div>
