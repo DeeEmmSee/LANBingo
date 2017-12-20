@@ -17,7 +17,7 @@ logger.level = 'debug';
 //App setup
 var app = express();
 var server = app.listen(4000, function() { 
-	logger.info('Listening on port 4000');
+	logger.info('Listening on port 4000'); 
 });
 
 //Static files
