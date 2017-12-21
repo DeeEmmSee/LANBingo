@@ -73,7 +73,7 @@ io.on('connection', function(socket){
 		socket.emit('connect_success', { name: socket.name });
 		socket.emit('chat', { message: socket.name + " has joined " + socket.room });
 		
-		logger.info(players);
+		//logger.info(players);
 		
 		// Generate numbers
 		var cards = GenerateNumbers(socket.name);
@@ -116,87 +116,102 @@ io.on('connection', function(socket){
 function GenerateNumbers(player) {
 	var cards = [];
 	var p = GetPlayerIndex(player);
-	var cardCounter = [];
 
-	var tmpCounter = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };	
-	
 	// Reset cards
 	players[p].cards = [];
 	
 	for (var i = 0; i < 6; i++) {
-		players[p].cards.push([]);
+		//players[p].cards.push([]);
 		cards.push([]);
-		cardCounter.push(tmpCounter);
 	}
 	
-	//Go through all numbers
-
-	var	availableCards = [0, 1, 2, 3, 4, 5];
+	// Go through all numbers
+	var numbers = { '0': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], '8': [] };
 	
 	for (var n = 1; n <= 90; n++) {	
-		var c;
-		var modular = n % 100 / 10 | 0;
+		var m = n % 100 / 10 | 0;
 		if (n == 90) {
-			modular = 8;
+			m = 8;
 		}
-				
-		while (true) {
-			logger.debug(availableCards);
-						
-			if (availableCards.length == 0) {
-				c = -1;
-				break;			
-			}
-			
-			c = GetRandomCard(availableCards);
-			
-			logger.debug("Card: " + c);
-			
-			// Does card already contain 15 numbers?
-			if (players[p].cards[c].length == 15) {
-				// Select another card
-				logger.warn("Over 15 numbers");
-				availableCards.splice(availableCards.indexOf(c), 1);
-				continue;
-			}
-			
-			//Does card already contain 3 numbers in the same 10s?			
-			/*if (cardCounter[c][modular] >= 3) {
-				// Select another card
-				console.log("More than 3 in number 'tens'");
-				availableCards.splice(c, 1);
-				continue;
-			}*/
-			
-			break;
-		}
-						
-		cardCounter[c][modular]++;
-			
-		if (c == -1) {
-			logger.error("PROBLEM. NO AVAILABLE CARD FOR NUMBER: " + n);
-		}
-				
-		// Number position
-				
-		var number = { number: n, position: "", called: false };
+		numbers[m].push(n);
+	}
 		
-		
-		// Add
-		players[p].cards[c].push(number);
-		cards[c].push(number);
+	// For each card add a number from each modular value (as each card needs at least 1)
+	for (var c = 0; c < cards.length; c++) {
+		for (var m = 0; m < 9; m++) {
+			var i = Math.floor((Math.random() * numbers[m].length)); //Random number index
+			var n = numbers[m][i];
+						
+			var number = { number: n, position: "", called: false };
+			cards[c].push(number);
+			numbers[m].splice(i, 1);
+		}
 	}
 	
-	logger.info(cards);
+	console.log(numbers);
+	
+	var remainingCards = [0, 1, 2, 3, 4, 5];
+		
+	// Distribute remaining numbers
+	for (var m = 0; m < 9; m++) {
+		var numbersCount = { '0': 1, '1': 1, '2': 1, '3': 1, '4': 1, '5': 1 };
+		var tmpCards = [];
+		
+		for (var i = 0; i < remainingCards.length; i++) {
+			tmpCards.push(remainingCards[i]);
+		}
+					
+		while (numbers[m].length > 0) {
+			var n = numbers[m][0]; // get first number
+			var c; 
+						
+			// Get random card
+			while (tmpCards.length > 0) {
+				var tmpI = Math.floor(Math.random() * tmpCards.length); //Random card index
+				c = tmpCards[tmpI];
+				
+				if (cards[c].length >= 15) {
+					remainingCards.splice(remainingCards.indexOf(c), 1);
+					tmpCards.splice(tmpCards.indexOf(c), 1);
+					continue;
+				}
+				
+				/*if (numbersCount[c] >= 3) {
+					logger.warn("Card already has 3 in those '10s' numbers");
+					console.log("c: " + c);
+					console.log("Before: " + tmpCards);
+					tmpCards.splice(c, 1);
+					console.log("After: " + tmpCards);
+					continue;
+				}*/
+				
+				break;
+			}
+			
+			if (tmpCards.length == 0) {
+				console.log("MAJOR ERROR");
+			}
+			
+			numbersCount[c]++;
+			
+			var number = { number: n, position: "", called: false };
+			cards[c].push(number);
+						
+			numbers[m].splice(0, 1);
+		}
+		
+		for (var t = 0; t < 6; t++) {
+			console.log("Card " + t + ": " + cards[t].length);
+		}
+	}
+	
+	players[p].cards = cards;
+	
+	//console.log(cards);
 	return cards;
 }
 
 // Functions
-function GetRandomCard(availableCards) {
-	var i = Math.floor((Math.random() * availableCards.length)); //Random card index
-	return availableCards[i];
-}
-
 function GetPlayerIndex(player_name) {
 	for (var p = 0; p < players.length; p++) {
 		if (players[p].name == player_name) {

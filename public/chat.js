@@ -32,6 +32,10 @@ app.controller('HomeCtrl', ['$scope', '$http', '$timeout', function($scope, $htt
 		}
 	}
 	
+	$scope.NewCard = function() {
+		socket.emit('generate_numbers');
+	}
+	
 	function SetUpSocket() {
 		socket.on('connect', function(){
 			//On connect
