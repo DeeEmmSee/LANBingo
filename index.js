@@ -171,6 +171,7 @@ function GenerateNumbers(player) {
 				c = tmpCards[tmpI];
 				
 				if (cards[c].length >= 15) {
+					logger.warn("Card already has 15 numbers");
 					remainingCards.splice(remainingCards.indexOf(c), 1);
 					tmpCards.splice(tmpCards.indexOf(c), 1);
 					continue;
@@ -178,10 +179,10 @@ function GenerateNumbers(player) {
 				
 				/*if (numbersCount[c] >= 3) {
 					logger.warn("Card already has 3 in those '10s' numbers");
-					console.log("c: " + c);
-					console.log("Before: " + tmpCards);
-					tmpCards.splice(c, 1);
-					console.log("After: " + tmpCards);
+					//console.log("c: " + c);
+					//console.log("Before: " + tmpCards);
+					tmpCards.splice(tmpCards.indexOf(c), 1);
+					//console.log("After: " + tmpCards);
 					continue;
 				}*/
 				
@@ -199,14 +200,14 @@ function GenerateNumbers(player) {
 						
 			numbers[m].splice(0, 1);
 		}
-		
-		for (var t = 0; t < 6; t++) {
-			console.log("Card " + t + ": " + cards[t].length);
-		}
 	}
 	
 	players[p].cards = cards;
 	
+	for (var t = 0; t < 6; t++) {
+		console.log("Card " + t + ": " + cards[t].length);
+		console.log(cards[t]);
+	}
 	//console.log(cards);
 	return cards;
 }
