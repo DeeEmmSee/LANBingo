@@ -9,6 +9,11 @@ h2{
     overflow: auto;
     background: #f9f9f9;
 }
+#users-list {
+	height: 400px;
+    overflow: auto;
+	border: solid 1px black;
+}
 
 #output p{
     padding: 14px 0px;
@@ -25,4 +30,10 @@ label{
     box-sizing: border-box;
     display: block;
     padding: 10px 20px;
+}
+
+.cardCell {
+	width:50px;
+	height:50px;
+	border: solid 1px black;
 }
