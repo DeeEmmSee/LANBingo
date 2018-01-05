@@ -133,7 +133,11 @@ function GenerateNumbers(player) {
 			index: i,
 			numbers: [], 
 			numbersCount: { '0': 1, '1': 1, '2': 1, '3': 1, '4': 1, '5': 1, '6': 1, '7': 1, '8': 1 }, 
-			rowCount: { '0': [], '1': [], '2': [] },
+			rowCount: { 
+				'0': [],
+				'1': [],
+				'2': [],
+			},
 			isValid: function() {
 				for (var i = 0; i < 9; i++) {
 					if (this.numbersCount[i] > 3) {
@@ -143,14 +147,50 @@ function GenerateNumbers(player) {
 				
 				return true;
 			},
-			isRowValid: function() {				
+			rowsAreValid: function() {
+				for (var i = 0; i < 3; i++) {
+					if (this.rowCount[i].length > 5) { // || this.rowCount[i].length < 5) {
+						return false;
+					}
+				}
+				
+				return true;
+			},
+			getNumbersByModular: function(modular) {
+				var tmpArray = [];
+				
+				// Get list of modular values by count 
+				for (var i = 0; i < this.numbers.length; i++) {
+					if (this.numbers[i].modular == modular) {
+						tmpArray.push(this.numbers[i]);
+					}
+				}
+				
+				return tmpArray;
+			},
+			getModularValues: function(modValue) {
+				var tmpArray = [];
+				
+				// Get list of modular values by count 
+				for (var i = 0; i < 9; i++) {
+					if (this.numbersCount[i] == modValue) {
+						tmpArray.push(i);
+					}
+				}
+				
+				return tmpArray;
+			},
+			sortNumbers: function() {
+				this.numbers.sort(function(a,b) { return a.number - b.number; });
+			}
+			/*isRowValid: function() {				
 				for (var i = 0; i < this.numbers.length; i++) {
 					if (!checkNumberRowAndModular(this.numbers[i], this.numbers)) {
 						return false;
 					}
 				}
 				return true;
-			}
+			}*/
 		});
 	}
 	
@@ -240,7 +280,7 @@ function GenerateNumbers(player) {
 	var numbersValidCount = 0;
 	
 	// Check numbers are valid
-	while (!cardsAreValid(cards)) {
+	while (!CardsAreValid(cards)) {
 		numbersValidCount++;
 		
 		for (var i = 0; i < cards.length; i++) {
@@ -317,70 +357,185 @@ function GenerateNumbers(player) {
 		}
 	}
 	
+	for (var c = 0; c < cards.length; c++) {
+		if (cards[c].isValid()) {
+			cards[c].sortNumbers();
+		}
+		else {
+			// "Shouldn't" get here
+			logger.error("Card " + c + " is invalid (Numbers)");
+			
+		}
+	}
+	
 	console.log("Times looped for numbers: " + numbersValidCount);
 	
 	// Assign number positions
 	for (var c = 0; c < cards.length; c++) {
-		var validRows = [0, 1, 2];
-		
-		for (var n = 0; n < cards[c].numbers.length; n++) {
-			while (cards[c].numbers[n].row == -1) {
-				var rowIndex = Math.floor(Math.random() * validRows.length);
-				var row = validRows[rowIndex];
+		// Cards with 3 of a 10's must be in numerical order i.e. 80, 81, 82 should be in rows 1, 2, 3 respectively
+		// Cards with 2 of a 10's must be in either row 1 & 2, 1 & 3, or 2 & 3
+		// Cards with 1 of a 10's must fill the remaining rows
 				
-				// And row doesn't contain number in same 10's
-				if (cards[c].rowCount[row].length < 5) {
-					cards[c].numbers[n].row = row;
-					cards[c].rowCount[row].push(cards[c].numbers[n].modular);
-				}
-				else {
-					validRows.splice(rowIndex, 1);
-				}
-			}			
-		}
-	}
-		
-	var rowValidCount = 0;
-	
-	// Check positions are valid
-	while (!cardRowsAreValid(cards)) {
-		rowValidCount++;
-		
-		for (var c = 0; c < cards.length; c++) {
-			// if 2 numbers have the same row and modular, change one of them		
-			for (var n = 0; n < cards[c].numbers.length; n++) {
-				var comparisonNum = cards[c].numbers[n];
-				//Loop through the other numbers 
-				var dupes = cards[c].numbers.filter(function(n) { return n.row == comparisonNum.row && n.modular == comparisonNum.modular; });
+		for (var i = 3; i > 0; i--) {
+			var modVals = cards[c].getModularValues(i);
+			
+			// Each modular value
+			for (var j = 0; j < modVals.length; j++) {
+				var modValsNumbers = cards[c].getNumbersByModular(modVals[j]);
+				//console.log(modValsNumbers);
 				
-				if (dupes.length > 1) {
-					// Duplicate
-					var remainingRows = cards[c].numbers.filter(function(n) { return n.row != comparisonNum.row && n.modular != comparisonNum.modular; });
-					var newRowIndex = Math.floor(Math.random() * remainingRows.length);
+				// Each number for modVals
+				for (var n = 0; n < modValsNumbers.length; n++) {
+					var index = GetCardIndex(modValsNumbers[n].number, cards[c].numbers);
 					
-					var newRow = cards[c].numbers[newRowIndex].row;
-					
-					console.log("Card: " + cards[c].index);
-					console.log(comparisonNum);
-					console.log(cards[c].numbers[newRowIndex]);
-					
-					cards[c].numbers[newRowIndex].row = comparisonNum.row;
-					cards[c].numbers[n].row = newRow;
-					
-					
-					console.log("New");
-					console.log(cards[c].numbers[newRowIndex]);
-					console.log(cards[c].numbers[n]);
+					// Determine row
+					// Groups of 3
+					if (i == 3) {
+						// Go 0, 1, 2
+						cards[c].numbers[index].row = n;
+						cards[c].rowCount[n].push(cards[c].numbers[index]);
+					}
+					else {
+						var newN;
+						
+						// Groups of 2
+						if (i == 2) {
+							// First number
+							if (n == 0) {
+								// Row will be 0 or 1
+								// If previous row is 1 then new row will be 2
+								// Else pick either row 1 or 2
+								newN = GetRandomNumber(1);
+								if (cards[c].rowCount[newN].length == 5) {
+									if (newN == 0) {
+										newN = 1;
+									}
+									else {
+										newN = 0;
+									}
+								}
+							}
+							// Second number
+							else {
+								// First number will be either row 1 or 2
+								newN = Math.floor((Math.random() * 2) + 1);
+								
+								// If row already contains 5 numbers use other row
+								if (cards[c].rowCount[newN].length == 5) {
+									if (newN == 0) {
+										newN = 1;
+									}
+									else if (newN == 1) {
+										newN = 0;
+									}
+									
+								}
+							}
+							
+							cards[c].numbers[index].row = newN;
+							cards[c].rowCount[newN].push(cards[c].numbers[index]);
+						}
+						// Groups of 1
+						/*else if (i == 1) {
+							// Take whatever's left
+							newN = GetRandomNumber(2); // Row 0, 1, 2
+							if (cards[c].rowCount[newN].length == 5) {
+								if (newN == 0) { // Row 0, either 1 or 2
+									newN = Math.floor((Math.random() * 2) + 1);
+									if (cards[c].rowCount[newN].length == 5) {
+										if (newN == 1) {
+											newN = 2;
+										}
+										else {
+											newN = 1;
+										}
+									}
+								}
+								else if (newN == 1) { // Row 1, either 0 or 2
+									newN = Math.floor((Math.random() * 2) + 1);
+									if (cards[c].rowCount[newN].length == 5) {
+										if (newN == 0) {
+											newN = 2;
+										}
+										else {
+											newN = 0;
+										}
+									}
+								}
+								else if (newN == 2) { // Row 2, either 0 or 1
+									newN = GetRandomNumber(1);
+									if (cards[c].rowCount[newN].length == 5) {
+										if (newN == 0) {
+											newN = 1;
+										}
+										else {
+											newN = 0;
+										}
+									}
+								}
+							}
+						}*/
+						
+						//cards[c].numbers[index].row = newN;
+						//cards[c].rowCount[newN].push(cards[c].numbers[index]);
+					}
 				}
 			}
 		}
 	}
 	
-	console.log("Times looped for rows: " + rowValidCount);
-	
-	//Re-order numbers so it looks correct
 	
 	
+	// Final row check
+	/*for (var c = 0; c < cards.length; c++) {
+		var rowTooMuch, rowTooLittle;
+		var cardFixed = true;
+		
+		for (var r = 0; r < 3; r++) {
+			if (cards[c].rowCount[r].length > 5) {
+				console.log("Invalid card! " + cards[c].index);
+				rowTooMuch = r;
+				cardFixed = false;
+			}
+			else if (cards[c].rowCount[r].length < 5) {
+				rowTooLittle = r;
+				cardFixed = false;
+			}
+		}
+		
+		// Get single number and move to another row. THERE WILL ALWAYS BE EXACTLY 1 NUMBER THAT'S THE ONLY ONE IN THAT 10'S GROUP
+		
+		if (!cardFixed) {
+			for (var m = 0; m < 9; m++) {			
+				if (cards[c].numbersCount[m] == 1) {
+					for (var cn = 0; cn < cards[c].numbers.length; cn++) {
+						// Find number in overflowing row with same modular
+						if (m == cards[c].numbers[cn].modular && rowTooMuch == cards[c].numbers[cn].row) {
+							// Move
+							console.log("Before");
+							console.log(cards[c].numbers[cn]);
+							
+							cards[c].numbers[cn].row = rowTooLittle;
+							
+							//cards[c].rowCount[rowTooLittle].push(cards[c].numbers[cn]);
+							//cards[c].rowCount[rowTooMuch].splice(GetCardIndex(cards[c].numbers[cn].number, cards[c].numbers[cn]), 1);
+							
+							console.log("After");
+							console.log(cards[c].numbers[cn]);
+							
+							cardFixed = true;
+							break;
+						}
+					}
+				}
+				
+				if (cardFixed) {
+					break;
+				}
+			}
+		}
+	}*/
+
 	// Set cards to player
 	players[p].cards = cards;
 		
@@ -388,9 +543,16 @@ function GenerateNumbers(player) {
 		console.log("Card " + t + ": (" + cards[t].numbers.length + ")");
 		console.log(cards[t].numbers);
 		console.log(cards[t].numbersCount);
+		console.log(cards[t].rowCount);
 	}
 	
-	if (cardsAreValid(players[p].cards)) {
+	for (var c = 0; c < cards.length; c++) {
+		if (!cards[c].rowsAreValid()) {
+			logger.error("Card: " + cards[c].index + " has invalid rows!");
+		}
+	}
+	
+	if (CardsAreValid(players[p].cards)) {
 		logger.info("All cards are valid!");
 	}
 	else {
@@ -403,7 +565,11 @@ function GenerateNumbers(player) {
 }
 
 // Functions
-function cardsAreValid(cards) {
+function GetRandomNumber(length) {
+	return Math.floor(Math.random() * length);
+}
+
+function CardsAreValid(cards) {
 	for (var i = 0; i < cards.length; i++) {
 		if (!cards[i].isValid()) {
 			return false;
@@ -412,25 +578,12 @@ function cardsAreValid(cards) {
 	return true;
 }
 
-function cardRowsAreValid(cards) {
-	for (var i = 0; i < cards.length; i++) {
-		if (!cards[i].isRowValid()) {
-			return false;
+function GetCardIndex(number, cardNumbers) {
+	for (var i = 0; i < cardNumbers.length; i++) {
+		if (cardNumbers[i].number == number) {
+			return i;
 		}
 	}
-	return true;
-}
-
-function checkNumberRowAndModular(number, numbersArray) {
-	for (var i = 0; i < numbersArray.length; i++) {		
-		if (number.row == numbersArray[i].row && number.modular == numbersArray[i].modular) {
-			console.log("FALSE");
-			console.log("Old: " + number.number + " New: " + numbersArray[i].number);
-			
-			return false;
-		}		
-	}
-	return true;
 }
 
 function GetPlayerIndex(player_name) {

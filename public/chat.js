@@ -91,25 +91,32 @@ app.directive("bingocard", ['$compile', function($compile) {
 			numbers: '=',
 		},
 		link: function (scope, element) { 
-			var template = "";
+			// When 'numbers' variable changes
+			scope.$watch("numbers", function() {
+				element.empty();
+				
+				var template = "";
 			
-			for (var r = 0; r < 3; r++) {
-				template += "<div class='row'>";
-				for (var c = 0; c < 9; c++) {
-					template += "<div class='cardCell col-sm-1'>";
-					var numberArray = scope.numbers.filter(function(n) { return n.row == r && n.modular == c; });
-					if (numberArray.length > 0) {
-						number = numberArray[0];
-						console.log(number);
-						template += number.number;
-					}
+				for (var r = 0; r < 3; r++) {
+					template += "<div class='row'>";
+					for (var c = 0; c < 9; c++) {
+						template += "<div class='cardCell col-sm-1'>";
+						var numberArray = scope.numbers.filter(function(n) { return n.row == r && n.modular == c; });
+						if (numberArray.length > 0) {
+							number = numberArray[0];
+							console.log(number);
+							template += number.number;
+						}
+						template += "</div>";
+					}	
 					template += "</div>";
-				}	
-				template += "</div>";
-			}
-						
-			var	compiled = $compile(template)(scope);
-			element.append(compiled);
+				}
+				
+				template += "<br />";
+							
+				var	compiled = $compile(template)(scope);
+				element.append(compiled);
+			});			
 		}
 	}
 }]);
