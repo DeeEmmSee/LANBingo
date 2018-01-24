@@ -136,10 +136,10 @@ function GenerateNumbers(player) {
 	// Check numbers are valid
 	while (!CardsAreValid(cards)) {
 		numbersValidCount++;
-        console.log("Count: " + numbersValidCount);
+        //console.log("Count: " + numbersValidCount);
         if (numbersValidCount > 10) {
             numbersValidCount = 0;
-            console.log("GETTING NEW NUMBERS");
+            logger.info("GETTING NEW NUMBERS");
             cards = GetNewNumbers();
         }
 
@@ -266,40 +266,57 @@ function GenerateNumbers(player) {
 								// Row will be 0 or 1
 								// If previous row is 1 then new row will be 2
 								// Else pick either row 1 or 2
-								newN = GetRandomNumber(1);
-								if (cards[c].rowCount[newN].length == 5) {
-									if (newN == 0) {
-										newN = 1;
-									}
-									else {
-										newN = 0;
-									}
-								}
+
+                                // If row 1 is almost full, use row 0. Otherwise row 1 and 2 will both be full and card will be invalid.
+                                if (cards[c].rowCount[1].length == 4 && cards[c].rowCount[2].length == 4) {
+                                    newN = 0;
+                                }
+                                else {
+                                    newN = GetRandomNumber(1);
+                                    if (cards[c].rowCount[newN].length == 5) {
+                                        if (newN == 0) {
+                                            newN = 1;
+                                        }
+                                        else {
+                                            newN = 0;
+                                        }
+                                    }
+                                }
 							}
 							// Second number
 							else {
-								// First number will be either row 1 or 2
-								newN = Math.floor((Math.random() * 2) + 1);
-								
-								// If row already contains 5 numbers use other row
-								if (cards[c].rowCount[newN].length == 5) {
-									if (newN == 1) {
-										newN = 2;
-									}
-									else if (newN == 2) {
-										newN = 1;
-									}
-									
-								}
+                                // Must use different row if row is full and another row is almost full. Bottom row should almost never be full
+                                if (cards[c].rowCount[0].length == 5 && cards[c].rowCount[1].length == 4) {
+                                    newN = 2;
+                                }
+                                else if (cards[c].rowCount[0].length == 5 && cards[c].rowCount[2].length == 4) {
+                                    newN = 1;
+                                }
+                                else {
+                                    // First number will be either row 1 or 2
+                                    newN = Math.floor((Math.random() * 2) + 1);
+
+
+                                    // If row already contains 5 numbers use other row
+                                    if (cards[c].rowCount[newN].length == 5) {
+                                        if (newN == 1) {
+                                            newN = 2;
+                                        }
+                                        else if (newN == 2) {
+                                            newN = 1;
+                                        }
+
+                                    }
+                                }
 							}
 							
 							cards[c].numbers[index].row = newN;
 							cards[c].rowCount[newN].push(cards[c].numbers[index]);
 						}
 						// Groups of 1
-						/*else if (i == 1) {
+						else if (i == 1) {
 							// Take whatever's left
-							newN = GetRandomNumber(2); // Row 0, 1, 2
+							/*newN = GetRandomNumber(2); // Row 0, 1, 2
 							if (cards[c].rowCount[newN].length == 5) {
 								if (newN == 0) { // Row 0, either 1 or 2
 									newN = Math.floor((Math.random() * 2) + 1);
@@ -334,8 +351,8 @@ function GenerateNumbers(player) {
 										}
 									}
 								}
-							}
-						}*/
+							}*/
+						}
 						
 						//cards[c].numbers[index].row = newN;
 						//cards[c].rowCount[newN].push(cards[c].numbers[index]);
@@ -410,7 +427,8 @@ function GenerateNumbers(player) {
 	for (var c = 0; c < cards.length; c++) {
 		if (!cards[c].rowsAreValid()) {
 			logger.error("Card: " + cards[c].index + " has invalid rows!");
-			
+            console.log(cards[c]);
+
 			for (var r = 0; r < 3; r++) {
 				if (cards[c].rowCount[r].length > 5) {
 					// Move to another row
