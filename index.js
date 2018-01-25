@@ -316,7 +316,7 @@ function GenerateNumbers(player) {
 						// Groups of 1
 						else if (i == 1) {
 							// Take whatever's left
-							/*newN = GetRandomNumber(2); // Row 0, 1, 2
+							newN = GetRandomNumber(2); // Row 0, 1, 2
 							if (cards[c].rowCount[newN].length == 5) {
 								if (newN == 0) { // Row 0, either 1 or 2
 									newN = Math.floor((Math.random() * 2) + 1);
@@ -329,15 +329,10 @@ function GenerateNumbers(player) {
 										}
 									}
 								}
-								else if (newN == 1) { // Row 1, either 0 or 2
-									newN = Math.floor((Math.random() * 2) + 1);
+                                else if (newN == 1) { // Row 1, either 0 or 2
+                                    newN = 0;
 									if (cards[c].rowCount[newN].length == 5) {
-										if (newN == 0) {
-											newN = 2;
-										}
-										else {
-											newN = 0;
-										}
+								        newN = 2;
 									}
 								}
 								else if (newN == 2) { // Row 2, either 0 or 1
@@ -351,11 +346,11 @@ function GenerateNumbers(player) {
 										}
 									}
 								}
-							}*/
-						}
-						
-						//cards[c].numbers[index].row = newN;
-						//cards[c].rowCount[newN].push(cards[c].numbers[index]);
+                            }
+
+                            cards[c].numbers[index].row = newN;
+						    cards[c].rowCount[newN].push(cards[c].numbers[index]);
+						}						
 					}
 				}
 			}
