@@ -7,6 +7,33 @@ var db = mongojs('localhost:27017/chat', ['account']);
 //db.account.insert({username:"b",password:"test2"});
 //db.account.insert({username:"b",password:"test2"}, function(err) { });
 
+//players {
+//    name: string,
+//    cards: array(object)
+//}
+
+//cards {
+//    index: int,
+//    numbers: array(object)
+//    numbersCount: object,
+//    rowCount: object,
+//    isValid: function,
+//    rowsAreValid: function,
+//    getNumbersByModular: function,
+//    getModularValues: function,
+//    sortNumbers: function,
+//    hasLine: function
+//}
+
+//numbers {
+//    number: int,
+//    row: double,
+//    called: bool,
+//    isValid: bool,
+//    modular: int
+//}
+
+
 // Configure logger settings
 logger.remove(logger.transports.Console);
 logger.add(logger.transports.Console, {
@@ -86,7 +113,7 @@ io.on('connection', function(socket){
 		
 		// If there's 2 or more players then start auto-process of calling numbers
 		if (players.length >= 2) {
-			
+            Start();
 		}
 	});
 	
@@ -119,6 +146,58 @@ io.on('connection', function(socket){
 		}		
 	});
 });
+
+// Function variables
+var timer;
+var state = 0; // 0 = Not playing, 1 = 1 line, 2 = 2 lines, 3 = 3 lines
+var numbers = [];
+
+// Functions
+function Start() {
+    numbers = [];
+    for (var n = 1; n <= 90; n++) {
+        numbers.push(n);
+    }
+
+    state = 1;
+    timer = setInterval(CallNumber, 1000);
+}
+
+function CallNumber() {
+    var numberCalled = GetRandomNumber(numbers.length);
+    numbers.splice(numbers.indexOf(numberCalled), 1);
+
+    var hasBingo = ProcessAllCards(numberCalled);
+
+    if (hasBingo.length > 0) {
+        // Someone called Bingo
+
+        // Change state
+
+    }
+}
+
+function ProcessAllCards(numberCalled) {
+    var hasBingo = [];
+
+    for (var p = 0; p < players.length; p++) {
+        for (var c = 0; c < players[p].cards.length; c++) {
+            for (var n = 0; n < players[p].cards[c].numbers.length; n++) {
+                if (players[p].cards[c].numbers[n] == numberCalled) {
+                    players[p].cards[c].numbers[n].called = true;
+
+                    // Check for bingo
+                    if (true) {
+                        hasBingo.push(players[p]);
+                    }
+                }
+            }
+        }
+    }
+
+
+    return hasBingo
+}
 
 function GenerateNumbers(player) {
 	logger.info("Generating numbers");
@@ -357,58 +436,6 @@ function GenerateNumbers(player) {
 		}
 	}
 	
-	
-	
-	// Final row check
-	/*for (var c = 0; c < cards.length; c++) {
-		var rowTooMuch, rowTooLittle;
-		var cardFixed = true;
-		
-		for (var r = 0; r < 3; r++) {
-			if (cards[c].rowCount[r].length > 5) {
-				console.log("Invalid card! " + cards[c].index);
-				rowTooMuch = r;
-				cardFixed = false;
-			}
-			else if (cards[c].rowCount[r].length < 5) {
-				rowTooLittle = r;
-				cardFixed = false;
-			}
-		}
-		
-		// Get single number and move to another row. THERE WILL ALWAYS BE EXACTLY 1 NUMBER THAT'S THE ONLY ONE IN THAT 10'S GROUP
-		
-		if (!cardFixed) {
-			for (var m = 0; m < 9; m++) {			
-				if (cards[c].numbersCount[m] == 1) {
-					for (var cn = 0; cn < cards[c].numbers.length; cn++) {
-						// Find number in overflowing row with same modular
-						if (m == cards[c].numbers[cn].modular && rowTooMuch == cards[c].numbers[cn].row) {
-							// Move
-							console.log("Before");
-							console.log(cards[c].numbers[cn]);
-							
-							cards[c].numbers[cn].row = rowTooLittle;
-							
-							//cards[c].rowCount[rowTooLittle].push(cards[c].numbers[cn]);
-							//cards[c].rowCount[rowTooMuch].splice(GetCardIndex(cards[c].numbers[cn].number, cards[c].numbers[cn]), 1);
-							
-							console.log("After");
-							console.log(cards[c].numbers[cn]);
-							
-							cardFixed = true;
-							break;
-						}
-					}
-				}
-				
-				if (cardFixed) {
-					break;
-				}
-			}
-		}
-	}*/
-
 	// Set cards to player
 	players[p].cards = cards;
 		
@@ -423,13 +450,12 @@ function GenerateNumbers(player) {
 		if (!cards[c].rowsAreValid()) {
 			logger.error("Card: " + cards[c].index + " has invalid rows!");
             console.log(cards[c]);
-
-			for (var r = 0; r < 3; r++) {
-				if (cards[c].rowCount[r].length > 5) {
-					// Move to another row
+			//for (var r = 0; r < 3; r++) {
+			//	if (cards[c].rowCount[r].length > 5) {
+			//		// Move to another row
 					
-				}
-			}
+			//	}
+			//}
 		}
 	}
 	
@@ -438,10 +464,8 @@ function GenerateNumbers(player) {
 	}
 	else {
 		logger.error("CARDS ARE NOT VALID");
-		//console.log(players[p].cards);
 	}
-	
-	
+		
 	return cards;
 }
 
@@ -469,7 +493,7 @@ function GetNewNumbers() {
             },
             rowsAreValid: function () {
                 for (var i = 0; i < 3; i++) {
-                    if (this.rowCount[i].length > 5) { // || this.rowCount[i].length < 5) {
+                    if (this.rowCount[i].length > 5) {
                         return false;
                     }
                 }
@@ -502,15 +526,10 @@ function GetNewNumbers() {
             },
             sortNumbers: function () {
                 this.numbers.sort(function (a, b) { return a.number - b.number; });
+            },
+            hasLine: function (lines) {
+                
             }
-			/*isRowValid: function() {				
-				for (var i = 0; i < this.numbers.length; i++) {
-					if (!checkNumberRowAndModular(this.numbers[i], this.numbers)) {
-						return false;
-					}
-				}
-				return true;
-			}*/
         });
     }
 
@@ -599,7 +618,6 @@ function GetNewNumbers() {
     return cards;
 }
 
-// Functions
 function GetRandomNumber(length) {
 	return Math.floor(Math.random() * length);
 }
